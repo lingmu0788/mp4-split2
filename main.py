@@ -42,7 +42,9 @@ class VideoSplitter:
     def setup_logging(self):
         """ログファイルのセットアップ"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.log_file = os.path.join(self.output_dir, f"split_{timestamp}.log")
+        # ログをプロジェクトディレクトリに出力
+        log_dir = os.path.dirname(os.path.abspath(__file__))
+        self.log_file = os.path.join(log_dir, f"split_{timestamp}.log")
         
     def log(self, message):
         """ログメッセージを出力してログファイルに記録"""
@@ -276,8 +278,9 @@ class VideoSplitter:
         
         self.log(f"動画時間: {self._format_time(duration)}")
         
-        # 一時的な音声ファイル
-        temp_audio = os.path.join(self.output_dir, "temp_audio.wav")
+        # 一時的な音声ファイル（/tmp に出力して権限問題を回避）
+        import tempfile
+        temp_audio = os.path.join(tempfile.gettempdir(), "temp_audio.wav")
         
         try:
             # 音声を抽出
@@ -317,7 +320,10 @@ class VideoSplitter:
         finally:
             # 一時ファイルをクリーンアップ
             if os.path.exists(temp_audio):
-                os.remove(temp_audio)
+                try:
+                    os.remove(temp_audio)
+                except Exception as e:
+                    self.log(f"一時ファイルの削除に失敗: {e}")
 
 
 def main():
